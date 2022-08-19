@@ -21,7 +21,17 @@ public class Stack : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<StackGate>())
+        if (other.transform.GetComponent<Stack>())
+        {
+            if (!other.transform.GetComponent<Stack>().stacked && stacked)
+            {
+                other.transform.GetComponent<Rigidbody>().isKinematic = true;
+
+                EventManager.GetStack(other.gameObject);
+
+            }
+        }
+        else if (other.GetComponent<StackGate>())
         {
             GetComponent<Collider>().isTrigger = true;
             GetComponent<Rigidbody>().isKinematic = true;
@@ -42,7 +52,7 @@ public class Stack : MonoBehaviour
             if (!onDomino)
             {
                 GetComponent<Rigidbody>().isKinematic = false;
-                GetComponent<Rigidbody>().AddForce(new Vector3(Random.Range(-1f, 1f), 1, 3) * 2, ForceMode.Impulse);
+                GetComponent<Rigidbody>().AddForce(new Vector3(Random.Range(-2f, 2f), 2, 3) * 2, ForceMode.Impulse);
                 Vector3 torque;
                 torque.x = Random.Range (-200, 200);
                 torque.y = Random.Range (-200, 200);
@@ -52,6 +62,14 @@ public class Stack : MonoBehaviour
                 EventManager.RemoveStack(gameObject);
             }
            
+        }
+
+        if (other.CompareTag("Finish"))
+        {
+            GetComponent<Collider>().isTrigger = true;
+            GetComponent<Rigidbody>().isKinematic = true;
+            onDomino = true;
+            EventManager.GetDominoStack(gameObject);
         }
     }
 

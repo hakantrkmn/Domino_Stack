@@ -28,7 +28,7 @@ public class PointController : MonoBehaviour
                 points[i].gameObject.AddComponent<Point>();
 
             }
-            points[i].localPosition = new Vector3(0, 1, i * gapBetweenPoints);
+            points[i].localPosition = new Vector3(0, .7f, 1+(i * gapBetweenPoints));
         }
         
     }
