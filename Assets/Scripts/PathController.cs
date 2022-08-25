@@ -1,4 +1,5 @@
-﻿using System.CodeDom.Compiler;
+﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections;
 using System.Collections.Generic;
 using PathCreation;
@@ -14,10 +15,15 @@ public class PathController : MonoBehaviour
     public float spacing;
 
     public List<Transform> createdPoints;
+
+
+
+
+
     // Start is called before the first frame update
     void Start()
     {
-        Generate();
+        //Generate();
 
     }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using RayFire;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -9,9 +10,28 @@ public class Stack : MonoBehaviour
     public bool stacked;
     public bool onDomino;
 
+    public bool onLevelEnd;
+
+
+    private void OnEnable()
+    {
+        EventManager.LevelEnd += LevelEnd;
+    }
+
+    private void OnDisable()
+    {
+        EventManager.LevelEnd -= LevelEnd;
+    }
+
+    private void LevelEnd()
+    {
+        onLevelEnd = true;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        //GetComponent<RayfireRigid>().Initialize();
     }
 
     // Update is called once per frame
@@ -28,10 +48,9 @@ public class Stack : MonoBehaviour
                 other.transform.GetComponent<Rigidbody>().isKinematic = true;
 
                 EventManager.GetStack(other.gameObject);
-
             }
         }
-        else if (other.GetComponent<StackGate>())
+        else if (other.GetComponent<StackGate>() && !onDomino && stacked)
         {
             GetComponent<Collider>().isTrigger = true;
             GetComponent<Rigidbody>().isKinematic = true;
@@ -40,28 +59,36 @@ public class Stack : MonoBehaviour
         }
         else if (other.GetComponent<MathDoor>())
         {
-            other.gameObject.SetActive(false);
-            for (int i = 0; i < other.GetComponent<MathDoor>().value; i++)
+            if (other.GetComponent<MathDoor>().value>0)
             {
-                var temp = Instantiate(gameObject, transform.position, Quaternion.identity);
-                EventManager.GetStack(temp);
+                other.gameObject.SetActive(false);
+                for (int i = 0; i < other.GetComponent<MathDoor>().value; i++)
+                {
+                    var temp = Instantiate(gameObject, transform.position, Quaternion.identity);
+                    EventManager.GetStack(temp);
+                }
             }
+            else
+            {
+                other.gameObject.SetActive(false);
+                EventManager.RemoveStackByNumber(-other.GetComponent<MathDoor>().value);
+            }
+            
         }
         else if (other.GetComponent<Obstacle>())
         {
-            if (!onDomino)
+            if (!onDomino&& stacked)
             {
-                GetComponent<Rigidbody>().isKinematic = false;
-                GetComponent<Rigidbody>().AddForce(new Vector3(Random.Range(-2f, 2f), 2, 3) * 2, ForceMode.Impulse);
+                /*GetComponent<Rigidbody>().isKinematic = false;
+                GetComponent<Rigidbody>().AddForce(new Vector3(Random.Range(-.1f, .1f), 0, 5) * 10, ForceMode.VelocityChange);
                 Vector3 torque;
-                torque.x = Random.Range (-200, 200);
-                torque.y = Random.Range (-200, 200);
-                torque.z = Random.Range (-200, 200);
+                torque.x = Random.Range(-200, 200);
+                torque.y = Random.Range(-200, 200);
+                torque.z = Random.Range(-200, 200);
                 GetComponent<Rigidbody>().angularVelocity = torque;
-                stacked = false;
+                stacked = false;*/
                 EventManager.RemoveStack(gameObject);
             }
-           
         }
 
         if (other.CompareTag("Finish"))
@@ -72,17 +99,23 @@ public class Stack : MonoBehaviour
             EventManager.GetDominoStack(gameObject);
         }
     }
+    
 
     private void OnCollisionEnter(Collision other)
     {
         if (other.transform.GetComponent<Stack>())
         {
-            if (!other.transform.GetComponent<Stack>().stacked && stacked)
+            if (!other.transform.GetComponent<Stack>().stacked && stacked && !other.transform.GetComponent<Stack>().onDomino)
             {
                 other.transform.GetComponent<Rigidbody>().isKinematic = true;
 
                 EventManager.GetStack(other.gameObject);
+            }
 
+            if (other.transform.GetComponent<Stack>().onDomino&& onLevelEnd)
+            {
+                EventManager.MoveCube(transform);
+                onLevelEnd = false;
             }
         }
     }
