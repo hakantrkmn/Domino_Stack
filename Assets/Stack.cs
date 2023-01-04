@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using RayFire;
 using UnityEngine;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 public class Stack : MonoBehaviour
@@ -28,16 +30,32 @@ public class Stack : MonoBehaviour
         onLevelEnd = true;
     }
 
-    // Start is called before the first frame update
-    void Start()
+    public void CrashStack()
     {
-        //GetComponent<RayfireRigid>().Initialize();
+        transform.parent = null;
+        GetComponent<Renderer>().enabled = false;
+        GetComponent<Rigidbody>().isKinematic = true;
+        GetComponent<Collider>().isTrigger = true;
+        transform.GetChild(0).gameObject.SetActive(true);
+
+        GetComponent<RayfireBomb>().Explode(0);
     }
 
-    // Update is called once per frame
-    void Update()
+    public void RemoveFromStack()
     {
+        transform.parent = null;
+        GetComponent<Rigidbody>().isKinematic = false;
+        GetComponent<Rigidbody>().AddForce(new Vector3(Random.Range(-.1f, .1f), 2f, .5f) * 10, ForceMode.VelocityChange);
+        GetComponent<Stack>().stacked = false;
     }
+
+    public void GoToDomino(Transform parent)
+    {
+        transform.parent = parent;
+        transform.DOLocalJump(Vector3.zero, 3, 3, 1f);
+        transform.DOLocalRotate(Vector3.zero, .5f);
+    }
+
 
     private void OnTriggerEnter(Collider other)
     {

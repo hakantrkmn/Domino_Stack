@@ -18,6 +18,8 @@ public class StackController : MonoBehaviour
     public List<GameObject> stackObjects;
     public List<GameObject> dominosObjects;
 
+    #region enable disable
+
     private void OnEnable()
     {
         EventManager.RemoveStackByNumber += RemoveStackByNumber;
@@ -27,7 +29,19 @@ public class StackController : MonoBehaviour
         EventManager.GetDominoStack += GetDominoStack;
         EventManager.RemoveStack += RemoveStack;
     }
+    private void OnDisable()
+    {
+        EventManager.GetDominoStack -= GetDominoStack;
+        EventManager.RemoveStack -= RemoveStack;
+        EventManager.LevelEnd -= LevelEnd;
+        EventManager.RemoveStackByNumber -= RemoveStackByNumber;
+        EventManager.ReArrangeStack -= ReArrangeStack;
 
+        EventManager.GetStack -= GetStack;
+    }
+
+    #endregion
+    
     private void LevelEnd()
     {
         foreach (var obj in dominosObjects)
@@ -44,27 +58,15 @@ public class StackController : MonoBehaviour
         for (int i = index; i < stackObjects.Count; i++)
         {
             var tempObj = stackObjects[i];
-            tempObj.transform.parent = null;
             templist.Add(tempObj);
-            tempObj.GetComponent<Rigidbody>().isKinematic = false;
-            tempObj.GetComponent<Rigidbody>().AddForce(new Vector3(Random.Range(-.1f, .1f), .2f, 5) * 10, ForceMode.VelocityChange);
-            Vector3 torque;
-            torque.x = Random.Range(-100, 100);
-            torque.y = Random.Range(-100, 100);
-            torque.z = Random.Range(-100, 100);
-            //tempObj.GetComponent<Rigidbody>().angularVelocity = torque;
-            tempObj.GetComponent<Stack>().stacked = false;
+            tempObj.GetComponent<Stack>().RemoveFromStack();
         }
-
         foreach (var Tobj in templist)
         {
             stackObjects.Remove(Tobj);
         }
-
         stackIndex = stackObjects.Count;
-        //stackIndex--;
-        //stackObjects.Remove(obj);
-        //ReArrangeStack();
+
     }
 
     private void RemoveStackByNumber(int amount)
@@ -73,21 +75,9 @@ public class StackController : MonoBehaviour
         for (int i = 0; i < amount; i++)
         {
             var tempObj = stackObjects[stackIndex - 1 - i];
-            tempObj.transform.parent = null;
             tempList.Add(tempObj);
-            tempObj.GetComponent<Renderer>().enabled = false;
-            tempObj.GetComponent<Rigidbody>().isKinematic = true;
-            tempObj.GetComponent<Collider>().isTrigger = true;
-            tempObj.transform.GetChild(0).gameObject.SetActive(true);
-
-            tempObj.GetComponent<RayfireBomb>().Explode(0);
-
-            //Destroy(tempObj, 2);
-            /*tempObj.GetComponent<RayfireRigid>().Demolish();
-            tempObj.GetComponent<RayfireBomb>().Explode(0);*/
-            /*tempObj.GetComponent<Collider>().enabled = false;
-            tempObj.GetComponent<Rigidbody>().isKinematic = true;
-            tempObj.transform.DOScale(0, 1);*/
+            tempObj.GetComponent<Stack>().CrashStack();
+            
         }
 
         foreach (var obj in tempList)
@@ -107,7 +97,6 @@ public class StackController : MonoBehaviour
         {
             obj.transform.parent = null;
             obj.GetComponent<Rigidbody>().isKinematic = false;
-            //obj.transform.DOScale(obj.transform.localScale*2, .5f);
             stackObjects.Remove(obj);
             ReArrangeStack();
         }
@@ -115,12 +104,8 @@ public class StackController : MonoBehaviour
         {
             if (!dominosObjects.Contains(obj))
             {
-                Debug.Log("sa");
 
-                obj.transform.parent = stackController.createdPoints[dominoStackIndex];
-                obj.transform.DOLocalJump(Vector3.zero, 3, 3, 1f);
-                obj.transform.DOLocalRotate(Vector3.zero, .5f);
-                //obj.transform.DOScale(obj.transform.localScale*2, .5f);
+                obj.GetComponent<Stack>().GoToDomino(stackController.createdPoints[dominoStackIndex]);
                 dominoStackIndex++;
                 stackObjects.Remove(obj);
                 dominosObjects.Add(obj);
@@ -142,24 +127,12 @@ public class StackController : MonoBehaviour
 
                 obj.transform.DOLocalRotate(Vector3.zero, .1f);
             }
-            else
-            {
-            }
 
             stackIndex++;
         }
     }
 
-    private void OnDisable()
-    {
-        EventManager.GetDominoStack -= GetDominoStack;
-        EventManager.RemoveStack -= RemoveStack;
-        EventManager.LevelEnd -= LevelEnd;
-        EventManager.RemoveStackByNumber -= RemoveStackByNumber;
-        EventManager.ReArrangeStack -= ReArrangeStack;
 
-        EventManager.GetStack -= GetStack;
-    }
 
     private void GetStack(GameObject obj)
     {
